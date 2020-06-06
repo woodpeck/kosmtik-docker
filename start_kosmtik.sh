@@ -8,16 +8,20 @@ function print_help {
     echo "Usage: $0 [OPTIONS] DIRECTORY MML_FILE"
     echo ""
     echo "Options:"
-    echo "  -p=ARG, --port=ARG  Port where Kosmtik should listen at (default 6789)"
-    echo "  -d=ARG, --dir=ARG   Directory to mount at /mapstyle where all resources"
-    echo "                      required by the map style. (required)"
-    echo "  -m=ARG, --mml=ARG   Path to the .mml file relative to the path provided"
-    echo "                      by --dir. (required)"
+    echo "  -p=ARG, --port=ARG         Port where Kosmtik should listen at (default 6789)"
+    echo "  -d=ARG, --dir=ARG          Directory to mount at /mapstyle where all resources"
+    echo "                             required by the map style. (required)"
+    echo "  -m=ARG, --mml=ARG          Path to the .mml file relative to the path provided"
+    echo "                             by --dir. (required)"
+    echo "  -f=ARG, --add-font-dir=ARG Additional search paths for fonts. They will be added"
+    echo "                             to the system paths."
+    echo "  -F=ARG, --fontconfig=ARG   Path to fontconfig configuration (defaults to"
+    echo "                             /etc/fonts/fonts.conf"
     exit 1
 }
 
 
-OPTS=`getopt -o p:d:m:h --long port:dir:mml:,help -n 'parse-options' -- "$@"`
+OPTS=`getopt -o p:d:m:f:F:h --long port:dir:mml:add-font-dir:fontconfig:,help -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then
     echo "Failed parsing options." >&2
@@ -27,6 +31,8 @@ fi
 PORT=6789
 DIRECTORY=""
 MML_FILE=""
+FONTCONFIG="/etc/fonts/fonts.conf"
+declare -a FONT_DIRS
 
 eval set -- "$OPTS"
 
@@ -35,6 +41,8 @@ while true; do
         -p | --port ) PORTMAPPING=$2; shift; shift ;;
         -d | --dir ) DIRECTORY=$2; shift; shift ;;
         -m | --mml ) MML_FILE=$2; shift; shift ;;
+	-f | --add-font-dir ) FONT_DIRS+=($2); shift; shift ;;
+	-F | --fontconfig ) FONTCONFIG=$2; shift; shift ;;
         -h | --help )    print_help; exit ;;
         -- ) shift; break ;;
         * ) break ;;
@@ -45,6 +53,28 @@ if [ "$DIRECTORY" == "" ] || [ "$MML_FILE" == "" ] ; then
     echo "ERROR: Missing options --dir and/or --mml."
     print_help
 fi
+
+echo "Detecting system font directories"
+declare -a FONT_DIRS
+FONT_DIR_COUNT=$(xmllint --xpath 'count(fontconfig/dir)' ${FONTCONFIG})
+for IDX in `seq 1 $FONT_DIR_COUNT`; do
+    FONT_PATH=$(xmllint --xpath "fontconfig/dir[$IDX]/text()" ${FONTCONFIG})
+    echo "Adding $FONT_PATH to font search path"
+    FONT_DIRS+=($FONT_PATH)
+done
+
+echo "Creating temporary directory where all font directories are linked from"
+TEMP_FONT_DIR=$(mktemp -d)
+TEMP_INDEX=1
+for DIR in ${FONT_DIRS[@]} ; do
+    if [ -d "$DIR" ] ; then
+        echo "Copying all files in $DIR from $TEMP_FONT_DIR/$TEMP_INDEX"
+        cp -r "$DIR" "$TEMP_FONT_DIR/$TEMP_INDEX"
+    else
+        echo "WARNING: Font directory $DIR does not exist"
+    fi
+    TEMP_INDEX=$((TEMP_INDEX + 1))
+done
 
 # Get path to PostgreSQL socket
 # See also https://www.jujens.eu/posts/en/2017/Feb/15/docker-unix-socket/
@@ -82,6 +112,7 @@ docker run \
     --user=$(id -u ${USER}):$(id -g ${USER}) \
     --mount=type=bind,source=$PG_SOCKET_DIR,destination=/var/run/postgresql,ro=true \
     --mount=type=bind,source=$DIRECTORY,destination=/mapstyle,ro=true \
+    --mount=type=bind,source=$TEMP_FONT_DIR,destination=/additional-fonts,ro=true \
     --env="MML_FILE=$MML_FILE" \
     --env="PORT=$PORT" \
     kosmtik:$KOSMTIK_VERSION || true
@@ -90,3 +121,6 @@ CONTAINER_ID=$(docker container ls -a -q -f ancestor=kosmtik:$KOSMTIK_VERSION)
 
 echo "Removing all Kosmtik containers: $CONTAINER_ID"
 docker container rm $CONTAINER_ID
+
+echo "Removing temporary directory $TEMP_FONT_DIR"
+rm -r $TEMP_FONT_DIR
