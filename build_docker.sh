@@ -3,8 +3,8 @@
 set -euo pipefail
 
 ZIP_URL_BASE=${ZIP_URL_BASE:-https://github.com/kosmtik/kosmtik/archive}
-BRANCH_TAG=${BRANCH_TAG:-0.0.17}
-BRANCH_TAG_IN_ZIP=${BRANCH_TAG_IN_ZIP:-0.0.17}
+BRANCH_TAG=${BRANCH_TAG:-86db5f319fc6e710db977665f8a2734b449db9b6}
+BRANCH_TAG_IN_ZIP=${BRANCH_TAG_IN_ZIP:-86db5f319fc6e710db977665f8a2734b449db9b6}
 
 SCRIPTDIR=$(dirname $0)
 

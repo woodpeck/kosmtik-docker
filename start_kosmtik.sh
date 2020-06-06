@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-KOSMTIK_VERSION=${KOSMTIK_VERSION:-0.0.17}
+KOSMTIK_VERSION=${KOSMTIK_VERSION:-86db5f319fc6e710db977665f8a2734b449db9b6}
 
 function print_help {
     echo "Usage: $0 [OPTIONS] DIRECTORY MML_FILE"

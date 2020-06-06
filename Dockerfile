@@ -1,4 +1,4 @@
-FROM node:9-stretch
+FROM node:12-buster
 # Node 9 is required because node-mapnik fails to build with later releases of NodeJS
 
 ARG ZIP_URL_BASE

@@ -7,4 +7,4 @@ fi
 
 set -euo pipefail
 
-./index.js serve --port $PORT "/mapstyle/$MML_FILE"
+./index.js serve --mapnik-version 3.0.20 --port $PORT "/mapstyle/$MML_FILE"
