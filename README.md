@@ -28,6 +28,16 @@ Start Kosmtik:
 The `--mml` argument has to be a path relative to the argument of `--dir`. It must not
 point upwards in the directory tree.
 
+
+## Dependencies
+
+This container relies on some dependencies which have to be available on the host
+system:
+
+* PostgreSQL database with contents in the structure requied by the map style
+* all fonts required by the style and not shipped with the style
+* Bash
+
 ## License
 
 This project is published under WTFPL. See the LICENSE file for further information.
