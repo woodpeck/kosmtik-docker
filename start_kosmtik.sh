@@ -16,12 +16,15 @@ function print_help {
     echo "  -f=ARG, --add-font-dir=ARG Additional search paths for fonts. They will be added"
     echo "                             to the system paths."
     echo "  -F=ARG, --fontconfig=ARG   Path to fontconfig configuration (defaults to"
-    echo "                             /etc/fonts/fonts.conf"
+    echo "                             /etc/fonts/fonts.conf)"
+    echo "  -n, --no-fontconfig        Do not read fontconfig configuration. Use this option"
+    echo "                             on hosts where fontconfig is not installed. It is"
+    echo "                             recommended to provide the font directories using -f."
     exit 1
 }
 
 
-OPTS=`getopt -o p:d:m:f:F:h --long port:dir:mml:add-font-dir:fontconfig:,help -n 'parse-options' -- "$@"`
+OPTS=`getopt -o p:d:m:f:F:nh --long port:dir:mml:add-font-dir:fontconfig:no-fontconfig,help -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then
     echo "Failed parsing options." >&2
@@ -32,6 +35,7 @@ PORT=6789
 DIRECTORY=""
 MML_FILE=""
 FONTCONFIG="/etc/fonts/fonts.conf"
+DISABLE_FONTCONFIG=0
 declare -a FONT_DIRS
 
 eval set -- "$OPTS"
@@ -43,6 +47,7 @@ while true; do
         -m | --mml ) MML_FILE=$2; shift; shift ;;
 	-f | --add-font-dir ) FONT_DIRS+=($2); shift; shift ;;
 	-F | --fontconfig ) FONTCONFIG=$2; shift; shift ;;
+	-n | --no-fontconfig ) DISABLE_FONTCONFIG=1; shift ;;
         -h | --help )    print_help; exit ;;
         -- ) shift; break ;;
         * ) break ;;
@@ -54,14 +59,15 @@ if [ "$DIRECTORY" == "" ] || [ "$MML_FILE" == "" ] ; then
     print_help
 fi
 
-echo "Detecting system font directories"
-declare -a FONT_DIRS
-FONT_DIR_COUNT=$(xmllint --xpath 'count(fontconfig/dir)' ${FONTCONFIG})
-for IDX in `seq 1 $FONT_DIR_COUNT`; do
-    FONT_PATH=$(xmllint --xpath "fontconfig/dir[$IDX]/text()" ${FONTCONFIG})
-    echo "Adding $FONT_PATH to font search path"
-    FONT_DIRS+=($FONT_PATH)
-done
+if [ "$DISABLE_FONTCONFIG" -eq 0 ] ; then
+    echo "Detecting system font directories"
+    FONT_DIR_COUNT=$(xmllint --xpath 'count(fontconfig/dir)' ${FONTCONFIG})
+    for IDX in `seq 1 $FONT_DIR_COUNT`; do
+        FONT_PATH=$(xmllint --xpath "fontconfig/dir[$IDX]/text()" ${FONTCONFIG})
+        echo "Adding $FONT_PATH to font search path"
+        FONT_DIRS+=($FONT_PATH)
+    done
+fi
 
 echo "Creating temporary directory where all font directories are linked from"
 TEMP_FONT_DIR=$(mktemp -d)

@@ -38,6 +38,9 @@ system:
 * all fonts required by the style and not shipped with the style
 * Bash
 
+If Fontconfig is not installed on your system (e.g. OS X), call `start_kosmtik.sh`
+with the `-n` option and provide the font directories using `--add-font-dir`.
+
 ## License
 
 This project is published under WTFPL. See the LICENSE file for further information.
