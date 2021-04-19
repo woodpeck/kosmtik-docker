@@ -1,0 +1,13 @@
+diff --git a/src/plugins/base-exporters/YAML.js b/src/plugins/base-exporters/YAML.js
+index 8d16068..9e25c76 100644
+--- a/src/plugins/base-exporters/YAML.js
++++ b/src/plugins/base-exporters/YAML.js
+@@ -3,7 +3,7 @@ var BaseExporter = require('./Base.js').BaseExporter,
+ 
+ class YAMLExporter extends BaseExporter {
+     export(callback) {
+-        callback(null, yaml.safeDump(this.project.load()));
++        callback(null, yaml.dump(this.project.load()));
+     };
+ }
+ 

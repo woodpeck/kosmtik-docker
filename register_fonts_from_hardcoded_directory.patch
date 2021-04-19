@@ -1,12 +1,19 @@
 diff --git a/src/back/Project.js b/src/back/Project.js
-index afa1439..bb6bad8 100644
+index 499cad6..29f3985 100644
 --- a/src/back/Project.js
 +++ b/src/back/Project.js
-@@ -19,6 +19,7 @@ var Project = function (config, filepath, options) {
-     this.mapnikPool = require('mapnik-pool')(this.mapnik);
-     this.mapnik.register_default_fonts();
-     this.mapnik.register_system_fonts();
-+    this.mapnik.register_fonts('/additional-fonts/', {'recurse': true});
-     this.mapnik.register_default_input_plugins();
-     this.mapnik.register_fonts(path.join(path.dirname(filepath), 'fonts'), {recurse: true});
-     this.changeState('init');
+@@ -21,6 +21,7 @@ class Project extends ConfigEmitter {
+         this.mapnik.register_system_fonts();
+         this.mapnik.register_default_input_plugins();
+         this.mapnik.register_fonts(path.join(path.dirname(filepath), 'fonts'), {recurse: true});
++        this.mapnik.register_fonts('/additional-fonts/', {'recurse': true});
+         this.changeState('init');
+         this.cachePath = path.join('tmp', this.id);
+         this.beforeState('loaded', this.initMetaCache);
+@@ -141,4 +142,4 @@ class Project extends ConfigEmitter {
+     };
+ }
+ 
+-exports = module.exports = { Project };
+\ No newline at end of file
++exports = module.exports = { Project };
