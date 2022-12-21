@@ -1,4 +1,4 @@
-FROM node:12-buster
+FROM node:16-bullseye
 
 ARG ZIP_URL_BASE
 ARG BRANCH_TAG
@@ -16,11 +16,11 @@ COPY run.sh register_fonts_from_hardcoded_directory.patch yaml_safeDump_config_j
 # In addition, it is required to change the symbolic name of the user called "node" by the base
 # image to the name used by the user startig the container for PostgreSQL peer authentication to
 # work.
-RUN apt-get update && apt-get install -y wget libmapnik-dev && \
+RUN apt-get update && apt-get install -y wget libmapnik-dev libgdal-dev vim && \
     mkdir /kosmtik && \
     cd /kosmtik && \
     wget --quiet -O - $ZIP_URL_BASE/$BRANCH_TAG.tar.gz | tar -xvz && \
-    cd kosmtik-$BRANCH_TAG_IN_ZIP && \
+    cd /kosmtik/kosmtik-$BRANCH_TAG_IN_ZIP && \
     patch src/back/Project.js /register_fonts_from_hardcoded_directory.patch && \
     patch src/Config.js /yaml_safeDump_config_js.patch && \
     patch src/plugins/base-exporters/YAML.js /yaml_safeDump_yaml_js.patch && \
