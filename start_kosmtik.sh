@@ -13,6 +13,8 @@ function print_help {
     echo "                             required by the map style. (required)"
     echo "  -m=ARG, --mml=ARG          Path to the .mml file relative to the path provided"
     echo "                             by --dir. (required)"
+    echo "  -M=ARG1:ARG2, --extra-mount=ARG1:ARG2"
+    echo "                             Mount directory ARG1 on host to ARG2 in the container"
     echo "  -f=ARG, --add-font-dir=ARG Additional search paths for fonts. They will be added"
     echo "                             to the system paths."
     echo "  -F=ARG, --fontconfig=ARG   Path to fontconfig configuration (defaults to"
@@ -24,7 +26,7 @@ function print_help {
 }
 
 
-OPTS=`getopt -o p:d:m:f:F:nh --long port:dir:mml:add-font-dir:fontconfig:no-fontconfig,help -n 'parse-options' -- "$@"`
+OPTS=`getopt -o p:d:m:M:f:F:nh --long port:dir:mml:add-font-dir:fontconfig:no-fontconfig,help -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then
     echo "Failed parsing options." >&2
@@ -36,6 +38,7 @@ DIRECTORY=""
 MML_FILE=""
 FONTCONFIG="/etc/fonts/fonts.conf"
 DISABLE_FONTCONFIG=0
+EXTRA_MOUNT=""
 declare -a FONT_DIRS
 
 eval set -- "$OPTS"
@@ -45,9 +48,11 @@ while true; do
         -p | --port ) PORTMAPPING=$2; shift; shift ;;
         -d | --dir ) DIRECTORY=$2; shift; shift ;;
         -m | --mml ) MML_FILE=$2; shift; shift ;;
-	-f | --add-font-dir ) FONT_DIRS+=($2); shift; shift ;;
-	-F | --fontconfig ) FONTCONFIG=$2; shift; shift ;;
-	-n | --no-fontconfig ) DISABLE_FONTCONFIG=1; shift ;;
+        -m | --mml ) MML_FILE=$2; shift; shift ;;
+        -f | --add-font-dir ) FONT_DIRS+=($2); shift; shift ;;
+        -F | --fontconfig ) FONTCONFIG=$2; shift; shift ;;
+        -n | --no-fontconfig ) DISABLE_FONTCONFIG=1; shift ;;
+        -M | --extra-mount ) EXTRA_MOUNT=$2; shift; shift ;;
         -h | --help )    print_help; exit ;;
         -- ) shift; break ;;
         * ) break ;;
@@ -109,6 +114,12 @@ fi
 
 SCRIPTDIR=$(dirname $0)
 
+MOUNT_ARG=""
+if [ "$EXTRA_MOUNT" != "" ] ; then
+    MOUNT_ARG="--mount=type=bind,source=$(echo $EXTRA_MOUNT | cut -d : -f 1),destination=$(echo $EXTRA_MOUNT | cut -d : -f 2)"
+    echo $MOUNT_ARG
+fi
+
 echo "Starting container"
 docker run \
     --attach=STDIN --attach=STDOUT --attach=STDERR \
@@ -119,6 +130,7 @@ docker run \
     --mount=type=bind,source=$PG_SOCKET_DIR,destination=/var/run/postgresql,ro=true \
     --mount=type=bind,source=$DIRECTORY,destination=/mapstyle,ro=true \
     --mount=type=bind,source=$TEMP_FONT_DIR,destination=/additional-fonts,ro=true \
+    $MOUNT_ARG \
     --env="MML_FILE=$MML_FILE" \
     --env="PORT=$PORT" \
     kosmtik:$KOSMTIK_VERSION || true
