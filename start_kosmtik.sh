@@ -22,11 +22,17 @@ function print_help {
     echo "  -n, --no-fontconfig        Do not read fontconfig configuration. Use this option"
     echo "                             on hosts where fontconfig is not installed. It is"
     echo "                             recommended to provide the font directories using -f."
+    echo "  -P=ARG, --pg-port=ARG      Specify PostgreSQL TCP port manually. Use this option if"
+    echo "                             pg_conftool is not available on the host. You need this"
+    echo "                             although PostgreSQL is accessed via its Unix socket because"
+    echo "                             its Unix socket is named after the TCP port."
+    echo "  -s=ARG, --socket-dir=ARG   Specify socket directory manually. Use this option if"
+    echo "                             pg_conftool is not available on the host."
     exit 1
 }
 
 
-OPTS=`getopt -o p:d:m:M:f:F:nh --long port:dir:mml:add-font-dir:fontconfig:no-fontconfig,help -n 'parse-options' -- "$@"`
+OPTS=`getopt -o p:d:m:M:f:F:nP:s:h --long port:dir:mml:add-font-dir:fontconfig:no-fontconfig:pg-port:socket-dir,help -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then
     echo "Failed parsing options." >&2
@@ -39,6 +45,8 @@ MML_FILE=""
 FONTCONFIG="/etc/fonts/fonts.conf"
 DISABLE_FONTCONFIG=0
 EXTRA_MOUNT=""
+PG_PORT=""
+PG_SOCKET_DIR=""
 declare -a FONT_DIRS
 
 eval set -- "$OPTS"
@@ -48,11 +56,12 @@ while true; do
         -p | --port ) PORTMAPPING=$2; shift; shift ;;
         -d | --dir ) DIRECTORY=$2; shift; shift ;;
         -m | --mml ) MML_FILE=$2; shift; shift ;;
-        -m | --mml ) MML_FILE=$2; shift; shift ;;
         -f | --add-font-dir ) FONT_DIRS+=($2); shift; shift ;;
         -F | --fontconfig ) FONTCONFIG=$2; shift; shift ;;
         -n | --no-fontconfig ) DISABLE_FONTCONFIG=1; shift ;;
         -M | --extra-mount ) EXTRA_MOUNT=$2; shift; shift ;;
+        -P | --pg-port ) PG_PORT=$2; shift; shift ;;
+        -s | --socket-dir ) PG_SOCKET_DIR=$2; shift; shift ;;
         -h | --help )    print_help; exit ;;
         -- ) shift; break ;;
         * ) break ;;
@@ -89,8 +98,12 @@ done
 
 # Get path to PostgreSQL socket
 # See also https://www.jujens.eu/posts/en/2017/Feb/15/docker-unix-socket/
-PG_SOCKET_DIR=$(pg_conftool show unix_socket_directories | sed -Ee "s/unix_socket_directories = '([^']+)'$/\1/g")
-PG_PORT=$(pg_conftool show port | sed -Ee "s/port = '([^']+)'$/\1/g")
+if [ "$PG_SOCKET_DIR" = "" ] ; then
+    PG_SOCKET_DIR=$(pg_conftool show unix_socket_directories | sed -Ee "s/unix_socket_directories = '([^']+)'$/\1/g")
+fi
+if [ "$PG_PORT" = "" ] ; then
+    PG_PORT=$(pg_conftool show port | sed -Ee "s/port = '([^']+)'$/\1/g")
+fi
 PG_SOCKET_FILENAME="/.s.PGSQL.$PG_PORT"
 PG_SOCKET_PATH="$PG_SOCKET_DIR/$PG_SOCKET_FILENAME"
 

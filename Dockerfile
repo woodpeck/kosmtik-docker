@@ -22,11 +22,8 @@ RUN apt-get update && apt-get install -y wget libmapnik-dev libgdal-dev vim && \
     wget --quiet -O - $ZIP_URL_BASE/$BRANCH_TAG.tar.gz | tar -xvz && \
     cd /kosmtik/kosmtik-$BRANCH_TAG_IN_ZIP && \
     patch src/back/Project.js /register_fonts_from_hardcoded_directory.patch && \
-    patch src/Config.js /yaml_safeDump_config_js.patch && \
-    patch src/plugins/base-exporters/YAML.js /yaml_safeDump_yaml_js.patch && \
     rm /register_fonts_from_hardcoded_directory.patch && \
     npm install && \
-#    cd node_modules/kosmtik && ln -s ../ node_modules && cd ../../ && \
     node index.js plugins --install kosmtik-fetch-remote && \
     chown -R node:node . && \
     usermod --login $HOST_USER node && \
