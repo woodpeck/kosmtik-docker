@@ -9,7 +9,7 @@ ARG HOST_GID
 
 USER $HOST_UID:$HOST_GID
 
-COPY run.sh register_fonts_from_hardcoded_directory.patch yaml_safeDump_config_js.patch yaml_safeDump_yaml_js.patch /
+COPY run.sh register_fonts_from_hardcoded_directory.patch /
 
 # It is required that the user running Kosmtik owns the files. I don't know why but it seems that
 # it depends on that. Well it's NodeJS.
