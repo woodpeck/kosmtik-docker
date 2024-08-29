@@ -22,10 +22,10 @@ Build the Docker image (required only once):
 Start Kosmtik:
 
 ```
-./start_kosmtik --dir /path/to/style/dir --mml path_to_mml_relative_to_dir_arg.mml
+./start_kosmtik.sh -d /path/to/style/dir -m path_to_mml_relative_to_dir_arg.mml
 ```
 
-The `--mml` argument has to be a path relative to the argument of `--dir`. It must not
+The `-m` argument has to be a path relative to the argument of `-d`. It must not
 point upwards in the directory tree.
 
 
@@ -35,6 +35,7 @@ This container relies on some dependencies which have to be available on the hos
 system:
 
 * PostgreSQL database with contents in the structure requied by the map style
+* xmllint
 * all fonts required by the style and not shipped with the style
 * Bash
 
